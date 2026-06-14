@@ -22,7 +22,7 @@ interface CreateOptions {
 const program = new Command();
 
 program
-  .name("mcp-forge")
+  .name("mcpfoundry")
   .description(
     "Forge production-ready MCP servers from databases or OpenAPI specs.",
   )
@@ -49,11 +49,11 @@ program
     "after",
     `
 Examples:
-  $ mcp-forge create --type openapi --input ./openapi.yaml --output ./my-server
-  $ mcp-forge create --type openapi --input https://petstore3.swagger.io/api/v3/openapi.json --output ./petstore
-  $ mcp-forge create --type database --provider postgres --uri "$DATABASE_URL" --output ./db-server --lang python
-  $ mcp-forge create --type openapi --input ./api.json --output ./secure-server --secure
-  $ mcp-forge create --type openapi --input ./api.json --output /tmp/x --dry-run
+  $ mcpfoundry create --type openapi --input ./openapi.yaml --output ./my-server
+  $ mcpfoundry create --type openapi --input https://petstore3.swagger.io/api/v3/openapi.json --output ./petstore
+  $ mcpfoundry create --type database --provider postgres --uri "$DATABASE_URL" --output ./db-server --lang python
+  $ mcpfoundry create --type openapi --input ./api.json --output ./secure-server --secure
+  $ mcpfoundry create --type openapi --input ./api.json --output /tmp/x --dry-run
 `,
   )
   .action(async (opts: CreateOptions) => {

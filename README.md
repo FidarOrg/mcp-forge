@@ -1,8 +1,8 @@
-# mcp-forge
+# mcpfoundry
 
 > Forge production-ready **MCP (Model Context Protocol) servers** from your existing data — a database or an OpenAPI spec — in seconds.
 
-`mcp-forge` is a zero-friction CLI that introspects a data source and scaffolds a
+`mcpfoundry` is a zero-friction CLI that introspects a data source and scaffolds a
 clean, self-contained, runnable MCP server. Generated servers always ship with
 **parameter validation** (Zod / Pydantic). An **optional** zero-trust
 **ZTAI Security Shield** (JWT guard + deception canary) can be layered in with a
@@ -11,9 +11,9 @@ single `--secure` flag — recommended, never forced.
 ## Install
 
 ```bash
-npm install -g mcp-forge
+npm install -g mcpfoundry
 # or run ad-hoc:
-npx mcp-forge create --help
+npx mcpfoundry create --help
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ npx mcp-forge create --help
 Every endpoint becomes a typed MCP tool:
 
 ```bash
-mcp-forge create \
+mcpfoundry create \
   --type openapi \
   --input ./openapi.json \
   --output ./my-mcp-server \
@@ -35,7 +35,7 @@ mcp-forge create \
 Tables are introspected and turned into CRUD tools:
 
 ```bash
-mcp-forge create \
+mcpfoundry create \
   --type database \
   --provider postgres \
   --uri "postgresql://user:pass@localhost:5432/mydb" \
@@ -65,7 +65,7 @@ mcp-forge create \
 ### Preview before generating
 
 ```bash
-mcp-forge create --type openapi --input ./openapi.yaml --dry-run
+mcpfoundry create --type openapi --input ./openapi.yaml --dry-run
 ```
 
 ```

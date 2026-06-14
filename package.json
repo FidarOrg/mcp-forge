@@ -1,5 +1,5 @@
 {
-  "name": "mcp-forge",
+  "name": "mcpfoundry",
   "version": "0.1.0",
   "description": "Forge production-ready MCP (Model Context Protocol) servers from databases or OpenAPI specs, with an optional ZTAI zero-trust security shield.",
   "keywords": [
@@ -15,7 +15,7 @@
   "license": "MIT",
   "type": "commonjs",
   "bin": {
-    "mcp-forge": "dist/cli.js"
+    "mcpfoundry": "dist/cli.js"
   },
   "files": [
     "dist",
@@ -47,10 +47,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FidarOrg/mcp-forge.git"
+    "url": "git+https://github.com/FidarOrg/mcpfoundry.git"
   },
   "bugs": {
-    "url": "https://github.com/FidarOrg/mcp-forge/issues"
+    "url": "https://github.com/FidarOrg/mcpfoundry/issues"
   },
-  "homepage": "https://github.com/FidarOrg/mcp-forge#readme"
+  "homepage": "https://github.com/FidarOrg/mcpfoundry#readme"
 }

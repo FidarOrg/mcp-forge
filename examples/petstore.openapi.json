@@ -3,7 +3,7 @@
   "info": {
     "title": "Petstore",
     "version": "1.0.0",
-    "description": "A tiny sample OpenAPI spec for testing mcp-forge."
+    "description": "A tiny sample OpenAPI spec for testing mcpfoundry."
   },
   "paths": {
     "/pets": {

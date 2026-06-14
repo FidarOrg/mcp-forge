@@ -1,4 +1,4 @@
-# Contributing to mcp-forge
+# Contributing to mcpfoundry
 
 Thanks for your interest! The architecture is deliberately built so the two most
 common contributions need **no changes to the core engine**.
