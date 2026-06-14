@@ -56,9 +56,26 @@ mcpfoundry create \
 | `--input` | Path to an OpenAPI spec, JSON or YAML (openapi mode) |
 | `--output` | Output directory (required) |
 | `--lang` | `nodejs` (default) or `python` |
+| `--transport` | `stdio` (default) or `http` |
+| `--port` | Port for the `http` transport (default `3000`) |
 | `--secure` | Embed the optional ZTAI Security Shield |
 | `--force` | Overwrite a non-empty output directory |
 | `--dry-run` | Preview the tools that would be generated, then exit (no files written) |
+
+### Transports
+
+By default the server runs over **stdio** — the standard way clients (Claude
+Desktop, Claude Code, etc.) launch a local MCP server. Pass `--transport http`
+to generate a server that listens on `http://localhost:<port>/mcp` instead
+(Streamable HTTP via Express for Node, FastMCP for Python):
+
+```bash
+mcpfoundry create --type openapi --input ./openapi.yaml --output ./srv --transport http --port 3000
+```
+
+With `--secure` + `--transport http`, the JWT guard verifies an
+`Authorization: Bearer <token>` header on **every request** (returns `401` on
+failure); with stdio it verifies `ZTAI_AUTH_TOKEN` once at startup.
 
 `--input` accepts a local path **or a URL**, in JSON or YAML.
 
@@ -80,9 +97,10 @@ mcpfoundry create --type openapi --input ./openapi.yaml --dry-run
 
 When you pass `--secure`, every generated server additionally enforces:
 
-1. **JWT Guard** — verifies a short-lived HS256 token (`ZTAI_AUTH_TOKEN` over
-   stdio, or `Authorization: Bearer` over SSE) against `JWT_SECRET`. Invalid or
-   missing tokens drop the connection before any tool runs.
+1. **JWT Guard** — verifies a short-lived HS256 token (`ZTAI_AUTH_TOKEN` at
+   startup over stdio, or an `Authorization: Bearer` header per request over
+   HTTP) against `JWT_SECRET`. Invalid or missing tokens are rejected before any
+   tool runs.
 2. **Parameter hardening** — strict Zod/Pydantic schemas (this is on even
    *without* `--secure`, because it's just good hygiene).
 3. **Deception Canary** — when `ZTAI_CANARY_ID` is set, tool output carries a

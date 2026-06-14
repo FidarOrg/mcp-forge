@@ -1,25 +1,70 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+{{#if isHttp}}
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import express from "express";
+{{else}}
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { tools } from "./tools.js";
-{{#if secure}}import { verifyStartupToken } from "./security.js";
 {{/if}}
+import { tools } from "./tools.js";
+{{#if secure}}import { {{#if isHttp}}verifyAuthHeader{{else}}verifyStartupToken{{/if}} } from "./security.js";
+{{/if}}
+function createServer(): McpServer {
+  const server = new McpServer({ name: {{json projectName}}, version: "0.1.0" });
+  for (const tool of tools) {
+    server.tool(tool.name, tool.description, tool.schema, tool.handler);
+  }
+  return server;
+}
+
 async function main(): Promise<void> {
+{{#if isHttp}}
+  const app = express();
+  app.use(express.json());
+
+  app.post("/mcp", async (req, res) => {
+{{#if secure}}
+    // ZTAI Security Shield: verify the Bearer token on every request.
+    try {
+      verifyAuthHeader(req.headers.authorization);
+    } catch (err) {
+      res.status(401).json({
+        jsonrpc: "2.0",
+        error: { code: -32001, message: (err as Error).message },
+        id: null,
+      });
+      return;
+    }
+{{/if}}
+    // Stateless: a fresh server + transport per request.
+    const server = createServer();
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    res.on("close", () => {
+      void transport.close();
+      void server.close();
+    });
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  });
+
+  const port = Number(process.env.PORT ?? {{port}});
+  app.listen(port, () => {
+    console.error(
+      `[{{projectName}}] MCP server listening on http://localhost:${port}/mcp with ${tools.length} tool(s).`,
+    );
+  });
+{{else}}
 {{#if secure}}
   // ZTAI Security Shield: verify the short-lived auth token before serving tools.
   verifyStartupToken();
 {{/if}}
-  const server = new McpServer({ name: {{json projectName}}, version: "0.1.0" });
-
-  for (const tool of tools) {
-    server.tool(tool.name, tool.description, tool.schema, tool.handler);
-  }
-
+  const server = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(
     `[{{projectName}}] MCP server running over stdio with ${tools.length} tool(s).`,
   );
+{{/if}}
 }
 
 main().catch((err) => {

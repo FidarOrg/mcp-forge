@@ -13,11 +13,35 @@ import jwt
 {{/if}}
 from fastmcp import FastMCP
 from pydantic import Field
-
-mcp = FastMCP({{json projectName}})
+{{#if secure}}{{#if isHttp}}
+from fastmcp.server.dependencies import get_http_request
+from fastmcp.server.middleware import Middleware, MiddlewareContext
+{{/if}}{{/if}}
 {{#if secure}}
-
 # --- ZTAI Security Shield (opt-in) ---
+{{#if isHttp}}
+
+def verify_auth_header(authorization: str | None) -> dict[str, Any]:
+    """Verify a Bearer JWT (HS256) from the Authorization header (per request)."""
+    secret = os.environ.get("JWT_SECRET")
+    if not secret:
+        raise RuntimeError("ZTAI Shield: JWT_SECRET is not set.")
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise RuntimeError("ZTAI Shield: missing Bearer token.")
+    token = authorization.split(" ", 1)[1]
+    try:
+        return jwt.decode(token, secret, algorithms=["HS256"])
+    except jwt.PyJWTError as exc:
+        raise RuntimeError(f"ZTAI Shield: invalid token ({exc}). Connection dropped.") from exc
+
+
+class ZtaiAuthMiddleware(Middleware):
+    """Reject any request whose Authorization header fails JWT verification."""
+
+    async def on_request(self, context: MiddlewareContext, call_next):
+        verify_auth_header(get_http_request().headers.get("authorization"))
+        return await call_next(context)
+{{else}}
 
 def verify_startup_token() -> dict[str, Any]:
     """Verify the short-lived HS256 token before serving any tools.
@@ -37,7 +61,7 @@ def verify_startup_token() -> dict[str, Any]:
         raise RuntimeError(
             f"ZTAI Shield: invalid ZTAI_AUTH_TOKEN ({exc}). Connection dropped."
         ) from exc
-
+{{/if}}
 
 def apply_canary(text: str) -> str:
     """Append a traceable deception marker when ZTAI_CANARY_ID is set."""
@@ -47,6 +71,11 @@ def apply_canary(text: str) -> str:
     seed = hashlib.sha256(canary_id.encode()).hexdigest()[:16]
     return f"{text}\n<!-- ztai-canary-{seed} -->"
 {{/if}}
+
+mcp = FastMCP({{json projectName}})
+{{#if secure}}{{#if isHttp}}
+mcp.add_middleware(ZtaiAuthMiddleware())
+{{/if}}{{/if}}
 
 {{#each tools}}
 @mcp.tool()
@@ -64,10 +93,14 @@ def {{this.name}}(
 
 {{/each}}
 def main() -> None:
-{{#if secure}}
+{{#if secure}}{{#unless isHttp}}
     verify_startup_token()
-{{/if}}
+{{/unless}}{{/if}}
+{{#if isHttp}}
+    mcp.run(transport="http", port=int(os.environ.get("PORT", {{port}})))
+{{else}}
     mcp.run()
+{{/if}}
 
 
 if __name__ == "__main__":

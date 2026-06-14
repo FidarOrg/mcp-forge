@@ -45,4 +45,10 @@ export interface CompileContext {
   secure: boolean;
   /** Convenience flag for templates that need DB drivers/env vars. */
   isDatabase: boolean;
+  /** Wire transport for the generated server. */
+  transport: "stdio" | "http";
+  /** Port for the http transport. */
+  port: number;
+  /** Convenience flag for templates: transport === "http". */
+  isHttp: boolean;
 }

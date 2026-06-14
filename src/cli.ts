@@ -14,6 +14,8 @@ interface CreateOptions {
   input?: string;
   output?: string;
   lang: string;
+  transport: string;
+  port: string;
   secure: boolean;
   force: boolean;
   dryRun: boolean;
@@ -38,6 +40,8 @@ program
   .option("--input <path>", "OpenAPI/Swagger spec — file path OR URL, JSON or YAML")
   .option("--output <dir>", "output directory for the generated server")
   .option("--lang <lang>", "target language: nodejs | python", "nodejs")
+  .option("--transport <transport>", "transport: stdio | http", "stdio")
+  .option("--port <port>", "port for the http transport", "3000")
   .option(
     "--secure",
     "embed the optional ZTAI Security Shield (JWT guard + deception canary)",
@@ -53,6 +57,7 @@ Examples:
   $ mcpfoundry create --type openapi --input https://petstore3.swagger.io/api/v3/openapi.json --output ./petstore
   $ mcpfoundry create --type database --provider postgres --uri "$DATABASE_URL" --output ./db-server --lang python
   $ mcpfoundry create --type openapi --input ./api.json --output ./secure-server --secure
+  $ mcpfoundry create --type openapi --input ./api.json --output ./http-server --transport http --port 3000
   $ mcpfoundry create --type openapi --input ./api.json --output /tmp/x --dry-run
 `,
   )
@@ -69,6 +74,16 @@ async function run(opts: CreateOptions): Promise<void> {
   const lang = opts.lang as TargetLang;
   if (lang !== "nodejs" && lang !== "python") {
     throw new Error(`Unsupported --lang "${opts.lang}". Use nodejs or python.`);
+  }
+
+  const transport = opts.transport as "stdio" | "http";
+  if (transport !== "stdio" && transport !== "http") {
+    throw new Error(`Unsupported --transport "${opts.transport}". Use stdio or http.`);
+  }
+
+  const port = Number(opts.port);
+  if (transport === "http" && (!Number.isInteger(port) || port < 1 || port > 65535)) {
+    throw new Error(`Invalid --port "${opts.port}". Use an integer between 1 and 65535.`);
   }
 
   if (!opts.dryRun && !opts.output) {
@@ -122,6 +137,9 @@ async function run(opts: CreateOptions): Promise<void> {
     sourceType,
     secure: Boolean(opts.secure),
     isDatabase: sourceType === "database",
+    transport,
+    port,
+    isHttp: transport === "http",
   };
 
   logger.info(`Compiling ${tools.length} tool(s) into a ${lang} MCP server…`);
@@ -148,7 +166,7 @@ function printDryRun(tools: ToolSpec[]): void {
 function printSummary(ctx: CompileContext, outputDir: string): void {
   logger.plain();
   logger.success(
-    `Forged ${logger.bold(ctx.projectName)} — ${ctx.tools.length} MCP tool(s), ${ctx.lang}${ctx.secure ? ", ZTAI Security Shield enabled" : ""}.`,
+    `Forged ${logger.bold(ctx.projectName)} — ${ctx.tools.length} MCP tool(s), ${ctx.lang}, ${ctx.transport} transport${ctx.secure ? ", ZTAI Security Shield enabled" : ""}.`,
   );
   logger.plain(`  ${logger.dim(outputDir)}`);
   logger.plain();
@@ -159,8 +177,13 @@ function printSummary(ctx: CompileContext, outputDir: string): void {
     logger.plain("  npm run build && npm start");
   } else {
     logger.plain(`  cd ${outputDir}`);
-    logger.plain("  pip install -e .");
+    logger.plain("  pip install -r requirements.txt");
     logger.plain("  python server.py");
+  }
+
+  if (ctx.isHttp) {
+    logger.plain();
+    logger.plain(`  Serves MCP over HTTP at ${logger.bold(`http://localhost:${ctx.port}/mcp`)} (override with PORT env).`);
   }
 
   if (!ctx.secure) {
