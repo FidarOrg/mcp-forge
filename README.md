@@ -19,7 +19,7 @@
 <div align="center">
 
 <!-- Static preview below. For an animated GIF, run `vhs docs/demo.tape` and swap in docs/demo.gif. -->
-<img src="docs/demo.svg" alt="mcpfoundry in action — generate a secure MCP server from an OpenAPI spec" width="820" />
+<img src="docs/demo.gif" alt="mcpfoundry in action — generate a secure MCP server from an OpenAPI spec" width="820" />
 
 </div>
 
@@ -136,19 +136,6 @@ Without `--secure` you still get a perfectly good, vendor-neutral MCP server.
 ```
 
 Parsers and templates are decoupled by a normalized intermediate representation, so **adding a new language is just a new `templates/<lang>/` folder** — no engine changes. See [CONTRIBUTING.md](./CONTRIBUTING.md).
-
----
-
-## 🎬 Want an animated demo?
-
-The preview above is a static SVG. For a real animated GIF, a [VHS](https://github.com/charmbracelet/vhs) script is committed — generate it in one command and swap it into the README:
-
-```bash
-brew install vhs        # one-time (see the VHS repo for other platforms)
-vhs docs/demo.tape      # writes docs/demo.gif
-```
-
-Then point the demo image at `docs/demo.gif`.
 
 ---
 

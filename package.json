@@ -1,6 +1,6 @@
 {
   "name": "mcpfoundry",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Forge production-ready MCP (Model Context Protocol) servers from databases or OpenAPI specs, with an optional ZTAI zero-trust security shield.",
   "keywords": [
     "mcp",
