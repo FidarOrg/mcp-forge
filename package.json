@@ -1,6 +1,6 @@
 {
   "name": "mcpfoundry",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Create production-ready MCP (Model Context Protocol) servers from databases or OpenAPI specs, with an optional ZTAI zero-trust security shield.",
   "keywords": [
     "mcp",
@@ -33,12 +33,14 @@
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
+    "better-sqlite3": "^12.11.1",
     "commander": "^12.1.0",
     "handlebars": "^4.7.8",
     "pg": "^8.11.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.14.0",
     "@types/pg": "^8.11.6",
     "eslint": "^9.9.0",

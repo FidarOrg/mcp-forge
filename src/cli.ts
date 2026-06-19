@@ -42,8 +42,8 @@ program
   .command("create")
   .description("Generate an MCP server from a data source.")
   .requiredOption("--type <type>", "source type: database | openapi")
-  .option("--provider <provider>", "database provider: postgres | mysql | mongodb")
-  .option("--uri <uri>", "database connection string (for --type database)")
+  .option("--provider <provider>", "database provider: postgres | sqlite | mysql | mongodb")
+  .option("--uri <uri>", "DB connection string, or a file path for sqlite (for --type database)")
   .option("--input <path>", "OpenAPI/Swagger spec — file path OR URL, JSON or YAML")
   .option("--output <dir>", "output directory for the generated server")
   .option("--lang <lang>", "target language: nodejs | python", "nodejs")
@@ -148,6 +148,8 @@ async function run(opts: CreateOptions): Promise<void> {
     sourceType,
     secure: Boolean(opts.secure),
     isDatabase: sourceType === "database",
+    provider: opts.provider,
+    isSqlite: opts.provider === "sqlite",
     transport,
     port,
     isHttp: transport === "http",

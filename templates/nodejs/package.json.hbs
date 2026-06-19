@@ -17,7 +17,8 @@
     "@modelcontextprotocol/sdk": "^1.4.0",
     "zod": "^3.23.8"{{#if isHttp}},
     "express": "^4.19.2"{{/if}}{{#if secure}},
-    "jsonwebtoken": "^9.0.2"{{/if}}{{#if isDatabase}},
+    "jsonwebtoken": "^9.0.2"{{/if}}{{#if isSqlite}},
+    "better-sqlite3": "^11.8.1"{{/if}}{{#if (eq provider "postgres")}},
     "pg": "^8.11.5"{{/if}}
   },
   "devDependencies": {
@@ -25,7 +26,8 @@
     "tsx": "^4.16.0",
     "@types/node": "^20.14.0"{{#if isHttp}},
     "@types/express": "^4.17.21"{{/if}}{{#if secure}},
-    "@types/jsonwebtoken": "^9.0.6"{{/if}}{{#if isDatabase}},
+    "@types/jsonwebtoken": "^9.0.6"{{/if}}{{#if isSqlite}},
+    "@types/better-sqlite3": "^7.6.11"{{/if}}{{#if (eq provider "postgres")}},
     "@types/pg": "^8.11.6"{{/if}}
   }
 }

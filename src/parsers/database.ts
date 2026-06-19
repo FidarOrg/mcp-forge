@@ -7,7 +7,7 @@ const NOT_IMPLEMENTED =
 
 /**
  * Connect to a database, introspect its schema, and emit CRUD MCP tools.
- * Only Postgres is implemented today; MySQL/MongoDB are intentionally stubbed
+ * Postgres and SQLite are implemented; MySQL/MongoDB are intentionally stubbed
  * with a friendly pointer so the community can extend them.
  */
 export async function introspectDatabase(
@@ -17,19 +17,24 @@ export async function introspectDatabase(
   switch (provider) {
     case "postgres":
       return introspectPostgres(uri);
+    case "sqlite":
+      return introspectSqlite(uri);
     case "mysql":
       throw new Error(`MySQL ${NOT_IMPLEMENTED}`);
     case "mongodb":
       throw new Error(`MongoDB ${NOT_IMPLEMENTED}`);
     default:
       throw new Error(
-        `Unknown provider "${provider}". Supported: postgres (mysql, mongodb coming soon).`,
+        `Unknown provider "${provider}". Supported: postgres, sqlite (mysql, mongodb coming soon).`,
       );
   }
 }
 
 interface Column {
+  /** Sanitized name — the MCP argument key. */
   name: string;
+  /** Original DB column name — used verbatim in generated SQL. */
+  column: string;
   type: ParamType;
   nullable: boolean;
   isPrimaryKey: boolean;
@@ -84,6 +89,7 @@ async function introspectPostgres(uri: string): Promise<ToolSpec[]> {
       const pk = primaryKeys.get(row.table_name);
       const col: Column = {
         name: sanitizeIdentifier(row.column_name),
+        column: row.column_name,
         type: mapPgType(row.data_type),
         nullable: row.is_nullable === "YES",
         isPrimaryKey: pk?.has(row.column_name) ?? false,
@@ -109,6 +115,7 @@ function buildCrudTools(table: string, columns: Column[]): ToolSpec[] {
 
   const keyParams: ParamSpec[] = keyCols.map((c) => ({
     name: c.name,
+    origName: c.column,
     type: c.type,
     required: true,
     description: cleanDescription(`Primary key (${c.name}) of ${table}`),
@@ -135,6 +142,7 @@ function buildCrudTools(table: string, columns: Column[]): ToolSpec[] {
     description: `Insert a new row into the ${table} table.`,
     params: nonKeyCols.map((c) => ({
       name: c.name,
+      origName: c.column,
       type: c.type,
       required: !c.nullable,
     })),
@@ -160,6 +168,7 @@ function buildCrudTools(table: string, columns: Column[]): ToolSpec[] {
         ...keyParams,
         ...nonKeyCols.map((c) => ({
           name: c.name,
+          origName: c.column,
           type: c.type,
           required: false,
         })),
@@ -188,5 +197,69 @@ function mapPgType(dataType: string): ParamType {
   if (t === "boolean") return "boolean";
   if (/json/.test(t)) return "object";
   if (t.includes("array")) return "array";
+  return "string";
+}
+
+async function introspectSqlite(uri: string): Promise<ToolSpec[]> {
+  // Accept a bare path or sqlite:/file: URIs.
+  const file = uri.replace(/^sqlite:(\/\/)?/i, "").replace(/^file:/i, "") || uri;
+
+  let Database: new (path: string, opts?: object) => SqliteDb;
+  try {
+    Database = (await import("better-sqlite3")).default as unknown as typeof Database;
+  } catch (err) {
+    throw new Error(
+      `SQLite support needs the "better-sqlite3" package (${(err as Error).message}). ` +
+        `Reinstall mcpfoundry, or run: npm i better-sqlite3`,
+    );
+  }
+
+  let db: SqliteDb;
+  try {
+    db = new Database(file, { readonly: true, fileMustExist: true });
+  } catch (err) {
+    throw new Error(
+      `Could not open SQLite database at "${file}" (${(err as Error).message}).`,
+    );
+  }
+
+  try {
+    const tableRows = db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+      )
+      .all() as { name: string }[];
+
+    const tools: ToolSpec[] = [];
+    for (const { name: table } of tableRows) {
+      const info = db
+        .prepare(`PRAGMA table_info("${table.replace(/"/g, '""')}")`)
+        .all() as { name: string; type: string; notnull: number; pk: number }[];
+      const columns: Column[] = info.map((c) => ({
+        name: sanitizeIdentifier(c.name),
+        column: c.name,
+        type: mapSqliteType(c.type),
+        nullable: c.notnull === 0,
+        isPrimaryKey: c.pk > 0,
+      }));
+      tools.push(...buildCrudTools(table, columns));
+    }
+    return tools;
+  } finally {
+    db.close();
+  }
+}
+
+/** Minimal structural type for the bits of better-sqlite3 we use. */
+interface SqliteDb {
+  prepare(sql: string): { all(): unknown[] };
+  close(): void;
+}
+
+function mapSqliteType(declared: string): ParamType {
+  const t = (declared || "").toUpperCase();
+  if (/INT/.test(t)) return "integer";
+  if (/(REAL|FLOA|DOUB|NUM|DEC)/.test(t)) return "number";
+  if (/BOOL/.test(t)) return "boolean";
   return "string";
 }

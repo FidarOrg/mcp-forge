@@ -25,13 +25,16 @@ common contributions need **no changes to the core engine**.
 
 ## Add a database provider
 
-`src/parsers/database.ts` currently implements Postgres. MySQL and MongoDB throw
+`src/parsers/database.ts` implements SQLite and Postgres. MySQL and MongoDB throw
 a "not yet implemented" error. To add one:
 
 1. Implement an `introspect<Provider>(uri): Promise<ToolSpec[]>` function.
 2. Map the source's column/field types to `ParamType` in `src/types.ts`.
-3. Emit CRUD `ToolSpec`s following the `buildCrudTools` shape.
+3. Emit CRUD `ToolSpec`s via `buildCrudTools` — set each column param's
+   `origName` so generated SQL uses the real column name.
 4. Wire it into the `switch` in `introspectDatabase`.
+5. For working SQL handlers, add a generator in `src/handlers.ts` (see the
+   SQLite implementation) and gate the driver dep + `db` module in the templates.
 
 ## Dev loop
 

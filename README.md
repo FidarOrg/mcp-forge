@@ -23,7 +23,7 @@
 
 </div>
 
-> **Stop hand-writing MCP servers.** Point `mcpfoundry` at a Postgres database or an OpenAPI spec and get a clean, runnable, *secure-by-option* MCP server — with parameter validation, typed tools, and an HTTP endpoint — generated for you. Node.js or Python. Zero boilerplate.
+> **Stop hand-writing MCP servers.** Point `mcpfoundry` at a database or an OpenAPI spec and get a clean, runnable, *secure-by-option* MCP server whose tools **actually run** — real parameterised SQL or real HTTP calls, not `TODO` stubs. Node.js or Python. Zero boilerplate.
 
 ---
 
@@ -56,7 +56,8 @@ That's a full MCP server — every endpoint turned into a validated tool — run
 | 🧩 **Maintainable & extensible** | Clean **Template-Compiler** architecture — add a language with a folder, no core changes. |
 | 🌐 **HTTP or stdio** | Streamable **HTTP by default**; `--no-http` for stdio (Claude Desktop / Claude Code style). |
 | 🐍 **Node.js & Python** | First-class `@modelcontextprotocol/sdk` (TS) **and** FastMCP (Python) output. |
-| 🔌 **DB & OpenAPI** | Introspect Postgres into CRUD tools, or convert any OpenAPI/Swagger spec (file **or URL**, JSON/YAML). |
+| ⚙️ **Working out of the box** | Tools run **real code** — parameterised SQL (SQLite) or HTTP calls to your API — not placeholders. |
+| 🔌 **DB & OpenAPI** | Introspect SQLite/Postgres into CRUD tools, or convert any OpenAPI/Swagger spec (file **or URL**, JSON/YAML) into tools that call the upstream API. |
 | 📎 **One-click Claude connection** | Every project ships a `.mcp.json` — auto-detected by Claude Code, paste-ready for Claude Desktop. |
 
 ---
@@ -71,13 +72,20 @@ mcpfoundry create --type openapi --input ./openapi.yaml --output ./my-server
 ```
 
 ### 2. From a database
-Tables are introspected into ready-to-wire CRUD tools.
+Tables are introspected into CRUD tools. **SQLite tools run real, parameterised SQL out of the box** — just point `DATABASE_PATH` at your file:
+
+```bash
+mcpfoundry create --type database --provider sqlite --uri ./app.db --output ./db-server
+cd db-server && npm install && DATABASE_PATH=../app.db npm start
+```
+
+Postgres is also introspected (its handlers are scaffolded stubs for now):
 
 ```bash
 mcpfoundry create --type database \
   --provider postgres \
   --uri "postgresql://user:pass@localhost:5432/mydb" \
-  --output ./db-server --lang python
+  --output ./pg-server --lang python
 ```
 
 > 💡 **Preview first** with `--dry-run` to see exactly which tools you'll get — no files written:
@@ -109,7 +117,7 @@ Without `--secure` you still get a perfectly good, vendor-neutral MCP server.
 | Flag | Description |
 | --- | --- |
 | `--type` | `database` or `openapi` *(required)* |
-| `--provider` | `postgres` \| `mysql` \| `mongodb` *(database mode)* |
+| `--provider` | `sqlite` \| `postgres` \| `mysql` \| `mongodb` *(database mode)* |
 | `--uri` | DB connection string *(database mode)* |
 | `--input` | OpenAPI spec — **file path or URL**, JSON or YAML *(openapi mode)* |
 | `--output` | Output directory *(required)* |
@@ -121,7 +129,7 @@ Without `--secure` you still get a perfectly good, vendor-neutral MCP server.
 | `--force` | Overwrite a non-empty output directory |
 | `--dry-run` | Preview the generated tools, then exit |
 
-> Postgres is fully supported today. MySQL & MongoDB are scaffolded and open for [contributions](./CONTRIBUTING.md).
+> SQLite & Postgres are introspected today; **SQLite emits working SQL**. MySQL & MongoDB are stubbed and open for [contributions](./CONTRIBUTING.md).
 
 ---
 

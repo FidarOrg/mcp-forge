@@ -20,14 +20,12 @@ Set BorderRadius 12
 #  - force a clean, anonymous prompt (no username / host / path is shown)
 #  - remove any previous output so the demo starts clean
 #  - warm the npx + npm caches so the recorded run stays snappy
-#  The whole warm-up runs in a subshell with an absolute path, so the working
-#  directory never moves away from the repo root.
 Hide
 Type "export PROMPT_COMMAND='' PS1='$ '"
 Enter
 Type "rm -rf petstore-mcp"
 Enter
-Type "( npx --yes mcpfoundry create --type openapi --input examples/petstore.openapi.json --output /tmp/.mcpf-warmup --secure && cd /tmp/.mcpf-warmup && npm install --silent --no-fund --no-audit ) > /dev/null 2>&1; rm -rf /tmp/.mcpf-warmup"
+Type "( npx --yes mcpfoundry create --type openapi --input examples/petstore.openapi.json --output /tmp/.mcpf-warmup && cd /tmp/.mcpf-warmup && npm install --silent --no-fund --no-audit && npm run build --silent ) > /dev/null 2>&1; rm -rf /tmp/.mcpf-warmup"
 Enter
 Sleep 50s
 Type "clear"
@@ -35,22 +33,32 @@ Enter
 Sleep 1500ms
 Show
 
-Type "# Create a secure, production-ready MCP server from an OpenAPI spec"
+Type "# Create a production-ready MCP server from an OpenAPI spec"
 Enter
 Sleep 800ms
-Type "npx mcpfoundry create --type openapi --input examples/petstore.openapi.json --output petstore-mcp --secure"
+Type "npx mcpfoundry create --type openapi --input examples/petstore.openapi.json --output petstore-mcp"
 Enter
 Sleep 4s
 
-Type "# Install dependencies and list the tools (methods) the server exposes"
+Type "cd petstore-mcp"
 Enter
-Sleep 600ms
-Type "cd petstore-mcp && npm install --silent --no-fund --no-audit && npm run tools --silent"
+Sleep 400ms
+Type "npm install --silent --no-fund --no-audit"
 Enter
-Sleep 10s
+Sleep 6s
+
+Type "npm run build --silent"
+Enter
+Sleep 3s
+
+Type "npm start"
+Enter
+Sleep 8s
 
 # Clean up off-screen so the demo leaves no artifacts behind.
 Hide
+Type "C-c"
+Enter
 Type "cd .. && rm -rf petstore-mcp"
 Enter
 Show

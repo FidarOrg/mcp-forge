@@ -1,0 +1,10 @@
+{{#if isSqlite}}/**
+ * Shared SQLite connection (better-sqlite3). The database file is taken from the
+ * DATABASE_PATH environment variable.
+ */
+import Database from "better-sqlite3";
+
+const file = process.env.DATABASE_PATH ?? "data.db";
+export const db = new Database(file, { fileMustExist: true });
+db.pragma("journal_mode = WAL");
+{{/if}}

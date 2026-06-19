@@ -34,12 +34,16 @@ export async function parseOpenApi(input: string): Promise<ToolSpec[]> {
       const name = sanitizeIdentifier(op.operationId || `${method}_${routePath}`);
       const params: ParamSpec[] = [];
 
-      // Path / query / header / cookie parameters.
+      // Path / query / header parameters.
       for (const prm of op.parameters ?? []) {
+        const loc: ParamSpec["location"] =
+          prm.in === "path" || prm.in === "header" ? prm.in : "query";
         params.push({
           name: sanitizeIdentifier(prm.name),
+          origName: prm.name,
+          location: loc,
           type: jsonSchemaType(prm.schema?.type),
-          required: Boolean(prm.required),
+          required: Boolean(prm.required) || prm.in === "path",
           description: cleanDescription(prm.description),
         });
       }
@@ -54,6 +58,8 @@ export async function parseOpenApi(input: string): Promise<ToolSpec[]> {
         )) {
           params.push({
             name: sanitizeIdentifier(propName),
+            origName: propName,
+            location: "body",
             type: jsonSchemaType(propSchema?.type),
             required: required.has(propName),
             description: cleanDescription(propSchema?.description),

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Handlebars from "handlebars";
 import { camelCase, pascalCase } from "./utils/naming";
+import { nodeHandlerBody, pyHandlerBody } from "./handlers";
 import type { CompileContext, ParamSpec } from "./types";
 
 /** Templates ship alongside the compiled engine: dist/compiler.js -> ../templates. */
@@ -127,6 +128,12 @@ export async function compile(
   }
 
   fs.mkdirSync(outputDir, { recursive: true });
+
+  // Generate each tool's real handler body for the target language.
+  for (const tool of ctx.tools) {
+    tool.handlerBody =
+      ctx.lang === "nodejs" ? nodeHandlerBody(tool, ctx) : pyHandlerBody(tool, ctx);
+  }
 
   for (const abs of walk(templateDir)) {
     const rel = path.relative(templateDir, abs);
