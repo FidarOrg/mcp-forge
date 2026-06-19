@@ -1,4 +1,3 @@
-import { Client } from "pg";
 import { cleanDescription, sanitizeIdentifier } from "../utils/naming";
 import type { ParamSpec, ParamType, ToolSpec } from "../types";
 
@@ -41,6 +40,7 @@ interface Column {
 }
 
 async function introspectPostgres(uri: string): Promise<ToolSpec[]> {
+  const { Client } = await import("pg");
   const client = new Client({ connectionString: uri });
   try {
     await client.connect();
